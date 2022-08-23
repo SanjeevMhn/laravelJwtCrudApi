@@ -72,9 +72,21 @@ class ProductsController extends Controller
      * @param  \App\Models\Products  $products
      * @return \Illuminate\Http\Response
      */
-    public function show(Products $products)
+    public function show($id)
     {
-        //
+        $product = Products::find($id);
+
+        if($product == ''){
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Product does not exist'
+            ]);
+        }
+        return response()->json([
+            'status' => 'success',
+            'product' => $product
+        ]);
+
     }
 
     /**
@@ -95,9 +107,35 @@ class ProductsController extends Controller
      * @param  \App\Models\Products  $products
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Products $products)
+    public function update(Request $request, $id)
     {
-        //
+        $product = Products::find($id);
+        if($product){
+            $validator = Validator::make($request->all(),[
+                'product_name' => 'required|string|max:255|unique:products',
+                'product_desc' => 'required|string',
+                'product_amount' => 'required|regex:/^\d+(\.\d{1,2})?$/',
+            ]);
+            if($validator->fails()){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'invalid data',
+                    'errors' => $validator->errors()
+                ]);
+            }
+
+            $product['product_name'] = $request['product_name'];
+            $product['product_desc'] = $request['product_desc'];
+            $product['product_amount'] = $request['product_amount'];
+
+            $product->save();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Product data updated',
+                'product' => $validator->validated()
+            ]);
+        }
     }
 
     /**
